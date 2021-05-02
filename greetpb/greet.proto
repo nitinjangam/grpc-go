@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package greetpb;
+
+option go_package = "github.com/nitinjangam/grpc-go/greetpb";
+
+message GreetRequest {
+    string reqGreet = 1;
+}
+
+message GreetResponse {
+    string resGreet = 1;
+}
+
+service GreetService {
+    //Unary API
+    rpc Greet (GreetRequest) returns (GreetResponse) {};
+    //Client Streaming API
+    rpc GreetMany (stream GreetRequest) returns (GreetResponse) {};
+    //Server Streaming API
+    rpc GreetManyTimes (GreetRequest) returns (stream GreetResponse) {};
+    //Bi-Directional Streaming API
+    rpc GreetAll (stream GreetRequest) returns (stream GreetResponse) {};
+}
