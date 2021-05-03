@@ -85,12 +85,14 @@ func bidiStream(c greetpb.GreetServiceClient) {
 			log.Fatalf("Error while send to GreetAll Server: %v", err)
 		}
 	}
+	if err := str.CloseSend(); err != nil {
+		log.Fatalf("Error while close send to GreetAll: %v", err)
+	}
 	for {
 		res, err := str.Recv()
 		if err != nil {
-			log.Fatalf("Error while receive from GreetAll RPC: %v", err)
 			break
 		}
-		log.Fatalf("Response from GreetAll RPC: %v", res.GetResGreet())
+		log.Printf("Response from GreetAll RPC: %v", res.GetResGreet())
 	}
 }

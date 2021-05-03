@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"sync"
 
 	"github.com/nitinjangam/grpc-go/greetpb"
 	"google.golang.org/grpc"
@@ -57,22 +58,41 @@ func (*server) GreetManyTimes(in *greetpb.GreetRequest, str greetpb.GreetService
 
 func (*server) GreetAll(str greetpb.GreetService_GreetAllServer) error {
 	log.Println("GreetAll function called")
-	for {
-		_, err := str.Recv()
-		if err != nil {
-			break
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	c := make(chan *greetpb.GreetRequest, 10)
+	q := make(chan bool)
+	go func() {
+		defer wg.Done()
+		for {
+			req, err := str.Recv()
+			if err != nil {
+				q <- true
+				break
+			} else {
+				c <- req
+			}
 		}
-	}
-
-	res := greetpb.GreetResponse{
-		ResGreet: "Nitin",
-	}
-	for {
-		if err := str.Send(&res); err != nil {
-			log.Fatalf("Error while send to GreetAll RPC: %v", err)
-			break
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		res := greetpb.GreetResponse{
+			ResGreet: "Nitin",
 		}
-	}
+		for {
+			select {
+			case <-c:
+				if err := str.Send(&res); err != nil {
+					log.Fatalf("Error while send to GreetAll RPC: %v", err)
+					break
+				}
+			case <-q:
+				break
+			}
+		}
+	}()
+	wg.Wait()
 	return nil
 }
 
